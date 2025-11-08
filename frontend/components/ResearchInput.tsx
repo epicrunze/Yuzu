@@ -80,7 +80,7 @@ export default function ResearchInput({ onSubmit, loading }: ResearchInputProps)
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="What research topic interests you?"
-            className="w-full px-6 py-4 rounded-button bg-white shadow-yuzu
+            className="w-full pl-6 pr-32 py-4 rounded-button bg-white shadow-yuzu
                        border-2 border-transparent focus:border-yuzu-500
                        text-gray-900 placeholder-gray-400 text-lg
                        transition-all duration-200 outline-none"

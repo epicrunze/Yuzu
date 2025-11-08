@@ -10,7 +10,7 @@
  */
 
 import { motion, PanInfo, useMotionValue, useTransform } from 'framer-motion';
-import { X, Star, Heart, ExternalLink, BookOpen } from 'lucide-react';
+import { Star, ExternalLink, BookOpen } from 'lucide-react';
 import { Paper } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import { useState } from 'react';
@@ -218,18 +218,6 @@ export default function PaperCard({
 
       {/* Action Buttons */}
       <div className="flex items-center justify-center gap-3 sm:gap-4">
-        {/* Pass Button */}
-        <button
-          onClick={onPass}
-          className="w-14 h-14 rounded-full bg-gray-100 hover:bg-gray-200 
-                     flex items-center justify-center transition-all duration-200
-                     hover:scale-105 active:scale-95"
-          aria-label="Pass on this paper"
-          title="Pass (Left Arrow)"
-        >
-          <X size={24} className="text-gray-600" />
-        </button>
-        
         {/* Superlike Button (Star) */}
         <button
           onClick={onSuperlike}
@@ -240,18 +228,6 @@ export default function PaperCard({
           title="Superlike (Space)"
         >
           <Star size={28} className="text-white fill-white" />
-        </button>
-        
-        {/* Next Level Button (Heart) */}
-        <button
-          onClick={onNext}
-          className="w-14 h-14 rounded-full bg-yuzu-100 hover:bg-yuzu-200 
-                     flex items-center justify-center transition-all duration-200
-                     hover:scale-105 active:scale-95"
-          aria-label="See more details"
-          title="More Details (Right Arrow)"
-        >
-          <Heart size={24} className="text-yuzu-600" />
         </button>
       </div>
 

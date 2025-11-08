@@ -19,6 +19,26 @@ export const api = axios.create({
   },
 });
 
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    const fullUrl = `${config.baseURL}${config.url}`;
+    const paramsString = new URLSearchParams(config.params as any).toString();
+    const completeUrl = paramsString ? `${fullUrl}?${paramsString}` : fullUrl;
+    
+    console.log('🚀 [axios interceptor] Request about to be sent:');
+    console.log(`   Method: ${config.method?.toUpperCase()}`);
+    console.log(`   Complete URL: ${completeUrl}`);
+    console.log('   Params object:', config.params);
+    
+    return config;
+  },
+  (error) => {
+    console.error('❌ [axios interceptor] Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
 // Error handler
 export class APIError extends Error {
   constructor(
@@ -50,19 +70,31 @@ export const paperAPI = {
    */
   search: async (
     query: string, 
-    maxResults: number = 20,
+    maxResults: number,
     sortBy: 'relevance' | 'submittedDate' | 'lastUpdatedDate' = 'relevance'
   ): Promise<Paper[]> => {
     try {
-      console.log(`API: Searching for "${query}" with max ${maxResults} results, sorted by ${sortBy}`);
+      console.log('📡 [api.ts] paperAPI.search called');
+      console.log('   Parameters received:');
+      console.log(`     - query: "${query}"`);
+      console.log(`     - maxResults: ${maxResults} (type: ${typeof maxResults})`);
+      console.log(`     - sortBy: ${sortBy}`);
+      
+      const requestParams = { 
+        query, 
+        max_results: maxResults,
+        sort_by: sortBy
+      };
+      console.log('   Axios params object:', JSON.stringify(requestParams, null, 2));
+      
       const response = await api.get('/api/search', {
-        params: { 
-          query, 
-          max_results: maxResults,
-          sort_by: sortBy
-        }
+        params: requestParams
       });
-      console.log('API: Response received:', response.data);
+      
+      console.log('✅ [api.ts] Response received');
+      console.log('   Papers count:', response.data.papers?.length);
+      console.log('   Full URL used:', response.config.url);
+      console.log('   ----------------------------------------');
       
       if (!response.data || !response.data.papers) {
         throw new Error('Invalid response format: missing papers array');
@@ -70,7 +102,7 @@ export const paperAPI = {
       
       return response.data.papers;
     } catch (error) {
-      console.error('API: Search error:', error);
+      console.error('❌ [api.ts] Search error:', error);
       return handleError(error);
     }
   },

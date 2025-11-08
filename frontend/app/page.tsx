@@ -55,10 +55,12 @@ export default function Home() {
     setCurrentQuery(query);
     
     try {
-      console.log(`Searching for: "${query}"`);
+      console.log('🔍 [page.tsx] handleSearch called');
+      console.log(`   Query: "${query}"`);
+      console.log('   Max results: 5');
       
       // Fetch papers from backend
-      const fetchedPapers = await paperAPI.search(query, 20);
+      const fetchedPapers = await paperAPI.search(query, 5);
       
       if (fetchedPapers.length === 0) {
         setError('No papers found for this query. Try different keywords.');

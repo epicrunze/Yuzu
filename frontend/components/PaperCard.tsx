@@ -97,19 +97,31 @@ export default function PaperCard({
       {/* Summary Content */}
       <div className="mb-6 min-h-[180px]">
         {summary ? (
-          <div className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none
-                          prose-headings:text-gray-900 prose-headings:font-bold
-                          prose-p:text-gray-700 prose-p:my-2
+          <div className="prose prose-sm max-w-none
+                          prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mt-3 prose-headings:mb-2
+                          prose-p:text-gray-700 prose-p:my-1.5 prose-p:leading-relaxed
                           prose-strong:text-gray-900 prose-strong:font-semibold
-                          prose-ul:my-2 prose-ul:list-disc prose-ul:pl-5
-                          prose-ol:my-2 prose-ol:list-decimal prose-ol:pl-5
-                          prose-li:text-gray-700 prose-li:my-1
-                          prose-em:text-gray-600 prose-em:italic
-                          prose-code:text-yuzu-700 prose-code:bg-yuzu-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
-            <ReactMarkdown>{summary}</ReactMarkdown>
+                          prose-ul:my-2 prose-ul:list-disc prose-ul:pl-5 prose-ul:text-gray-700
+                          prose-ol:my-2 prose-ol:list-decimal prose-ol:pl-5 prose-ol:text-gray-700
+                          prose-li:text-gray-700 prose-li:my-0.5 prose-li:leading-relaxed
+                          prose-em:text-gray-600 prose-em:italic prose-em:not-italic
+                          prose-code:text-yuzu-700 prose-code:bg-yuzu-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-medium
+                          prose-a:text-yuzu-600 prose-a:no-underline hover:prose-a:underline prose-a:font-medium
+                          prose-blockquote:border-yuzu-300 prose-blockquote:text-gray-600 prose-blockquote:italic">
+            <ReactMarkdown
+              components={{
+                // Prevent external links from opening in same tab
+                a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
+                // Ensure code blocks are inline by default
+                code: ({ node, inline, ...props }) => 
+                  inline ? <code {...props} /> : <code className="block" {...props} />
+              }}
+            >
+              {summary}
+            </ReactMarkdown>
           </div>
         ) : (
-          <div className="text-gray-400 italic">
+          <div className="text-gray-400 italic text-sm">
             Loading summary...
           </div>
         )}

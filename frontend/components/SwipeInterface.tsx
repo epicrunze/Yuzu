@@ -157,7 +157,7 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
 
   /**
    * Handle NEXT action (right arrow)
-   * Go deeper into current paper or move to next if at max level
+   * Go deeper into current paper or save + move to next if at max level
    */
   const handleNext = useCallback(() => {
     if (currentLevel < 3) {
@@ -168,25 +168,39 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
         setSwipeDirection(null);
       }, 200);
     } else {
-      // Already at level 3, treat like pass
+      // Already at level 3 - user has read all the way through
+      // Auto-save the paper and move to next
+      if (currentPaper) {
+        console.log(`Auto-saving paper at level 3: ${currentPaper.title}`);
+        onSuperlike(currentPaper, currentLevel);
+      }
       handlePass();
     }
-  }, [currentLevel, handlePass]);
+  }, [currentLevel, currentPaper, onSuperlike, handlePass]);
 
   /**
    * Handle SUPERLIKE action (space)
-   * Save paper to favorites and move to next
+   * Save paper and elevate to next level (or next paper if at level 3)
    */
   const handleSuperlike = useCallback(() => {
     if (!currentPaper) return;
 
-    console.log(`Superliked: ${currentPaper.title}`);
+    console.log(`Superliked: ${currentPaper.title} at level ${currentLevel}`);
     
-    // Trigger parent callback
+    // Always save the paper
     onSuperlike(currentPaper, currentLevel);
     
-    // Move to next paper
-    handlePass();
+    if (currentLevel < 3) {
+      // Elevate to next level to see more details
+      setSwipeDirection('right');
+      setTimeout(() => {
+        setCurrentLevel(prev => (prev + 1) as 1 | 2 | 3);
+        setSwipeDirection(null);
+      }, 200);
+    } else {
+      // Already at max level, move to next paper
+      handlePass();
+    }
   }, [currentPaper, currentLevel, onSuperlike, handlePass]);
 
   /**

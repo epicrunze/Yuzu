@@ -9,6 +9,7 @@
 
 import { motion } from 'framer-motion';
 import { Sparkles, Zap, Coffee } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const LOADING_MESSAGES = [
   { text: 'Squeezing knowledge from papers...', icon: Sparkles },
@@ -19,10 +20,14 @@ const LOADING_MESSAGES = [
 ];
 
 export default function LoadingState() {
-  // Pick random message
-  const { text, icon: Icon } = LOADING_MESSAGES[
-    Math.floor(Math.random() * LOADING_MESSAGES.length)
-  ];
+  // Pick random message on client side only to avoid hydration mismatch
+  const [messageIndex, setMessageIndex] = useState(0);
+  
+  useEffect(() => {
+    setMessageIndex(Math.floor(Math.random() * LOADING_MESSAGES.length));
+  }, []);
+  
+  const { text, icon: Icon } = LOADING_MESSAGES[messageIndex];
 
   return (
     <div className="bg-white rounded-card shadow-yuzu-lg p-12 w-full max-w-md mx-auto

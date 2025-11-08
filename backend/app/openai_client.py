@@ -89,6 +89,7 @@ Cover:
 
 Be specific but concise. Use technical terms where appropriate.
 Don't shy away from using equations and such details to explain the paper's methodology.
+For in-text latex for math, use the dollar sign $some latex$
 Format as markdown headers (##) and bullet points.
 Add bold to highlight specific important words in-text
 Do not include the title of the paper
@@ -132,6 +133,7 @@ Format as markdown headers (##) and bullet points.
 Add bold to highlight specific important words in-text
 Never reference the paper directly
 Do not include the title of the paper
+For in-text latex for math, use the dollar sign $some latex$
 
 Full Paper Text:
 {full_text}

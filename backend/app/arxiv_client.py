@@ -13,6 +13,9 @@ from urllib.parse import urlencode
 import httpx
 from bs4 import BeautifulSoup
 from app.models import Paper
+import io
+import asyncio
+import pdfplumber
 
 
 class ArxivClient:
@@ -170,73 +173,74 @@ class ArxivClient:
     
     async def get_full_text(self, paper_id: str) -> Optional[str]:
         """
-        Fetch full text content from ArXiv HTML page
+        Fetch full text content from the paper's PDF using pdfplumber
         
         Args:
             paper_id: ArXiv paper ID (e.g., "1706.03762")
         
         Returns:
-            Full text of the paper, or None if not available
+            Full text of the paper (first ~50k chars), or None if not available
         """
         # Check cache first
         if paper_id in self.fulltext_cache:
             print(f"Full text cache hit for {paper_id}")
             return self.fulltext_cache[paper_id]
         
-        # Try HTML version first (newer papers have this)
-        html_url = f"https://arxiv.org/html/{paper_id}"
-        
+        pdf_url = f"https://arxiv.org/pdf/{paper_id}.pdf"
         try:
-            print(f"Fetching full text from {html_url}")
-            
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(html_url, follow_redirects=True)
+            print(f"Fetching PDF from {pdf_url}")
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.get(pdf_url, follow_redirects=True)
                 
-                # Check if HTML version exists
-                if response.status_code == 200 and 'text/html' in response.headers.get('content-type', ''):
-                    soup = BeautifulSoup(response.text, 'html.parser')
+                # If we received a PDF payload, try to parse it
+                content_type = response.headers.get('content-type', '')
+                if response.status_code == 200 and (response.content and ('pdf' in content_type or response.content[:4] == b'%PDF')):
                     
-                    # Extract main article content
-                    # ArXiv HTML typically has content in article tags or main content divs
-                    article = soup.find('article') or soup.find('div', class_='ltx_page_main')
+                    # run the blocking pdfplumber parsing in a thread
+                    def _extract_text_from_pdf(pdf_bytes: bytes) -> str:
+                        text_parts = []
+                        try:
+                            with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+                                for page in pdf.pages:
+                                    try:
+                                        page_text = page.extract_text()
+                                    except Exception:
+                                        page_text = None
+                                    if page_text:
+                                        text_parts.append(page_text)
+                        except Exception as e:
+                            print(f"pdfplumber error for {paper_id}: {e}")
+                            return ""
+                        joined = "\n\n".join(text_parts)
+                        joined = re.sub(r'\n\s*\n', '\n\n', joined)
+                        joined = re.sub(r' +', ' ', joined)
+                        return joined
                     
-                    if article:
-                        # Remove script and style elements
-                        for script in article(['script', 'style', 'nav', 'header', 'footer']):
-                            script.decompose()
-                        
-                        # Get text content
-                        text = article.get_text(separator='\n', strip=True)
-                        
-                        # Clean up excessive whitespace
-                        text = re.sub(r'\n\s*\n', '\n\n', text)
-                        text = re.sub(r' +', ' ', text)
-                        
-                        # Limit to reasonable size (first 50k chars to avoid token limits)
-                        if len(text) > 50000:
-                            text = text[:50000] + "\n\n[Content truncated due to length...]"
-                        
-                        # Cache the result
-                        self.fulltext_cache[paper_id] = text
-                        
-                        print(f"Successfully fetched full text for {paper_id} ({len(text)} chars)")
-                        return text
+                    extracted = await asyncio.to_thread(_extract_text_from_pdf, response.content)
                     
-                # If HTML version not available, try to extract from abs page
-                print(f"HTML version not available for {paper_id}, trying abstract page")
+                    if extracted:
+                        if len(extracted) > 50000:
+                            extracted = extracted[:50000] + "\n\n[Content truncated due to length...]"
+                        
+                        self.fulltext_cache[paper_id] = extracted
+                        print(f"Successfully extracted full text for {paper_id} ({len(extracted)} chars)")
+                        return extracted
+                    else:
+                        print(f"No text extracted from PDF for {paper_id}, falling back to abstract page")
+                else:
+                    print(f"PDF not available at {pdf_url} (status={response.status_code}, content-type={content_type})")
+                
+                # Fallback: try abstract page (as before)
                 abs_url = f"https://arxiv.org/abs/{paper_id}"
+                print(f"Fetching abstract page from {abs_url}")
                 response = await client.get(abs_url)
-                
                 if response.status_code == 200:
                     soup = BeautifulSoup(response.text, 'html.parser')
-                    
-                    # Get abstract as fallback
                     abstract_block = soup.find('blockquote', class_='abstract')
                     if abstract_block:
                         abstract_text = abstract_block.get_text(strip=True)
-                        # Remove "Abstract:" prefix if present
                         abstract_text = re.sub(r'^Abstract:\s*', '', abstract_text)
-                        
+                        self.fulltext_cache[paper_id] = abstract_text
                         print(f"Falling back to abstract for {paper_id} (full text not available)")
                         return abstract_text
                 
@@ -246,7 +250,6 @@ class ArxivClient:
         except Exception as e:
             print(f"Error fetching full text for {paper_id}: {e}")
             return None
-
 
 # Create singleton instance
 arxiv_client = ArxivClient()

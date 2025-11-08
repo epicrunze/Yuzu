@@ -29,6 +29,7 @@ app.add_middleware(
     allow_origins=[
         "https://yuzu.epicrunze.com",  # Production frontend
         "https://api-yuzu.epicrunze.com",  # Production API (for docs/testing)
+        "http://localhost:3000"
     ],
     allow_credentials=True,
     allow_methods=["*"],

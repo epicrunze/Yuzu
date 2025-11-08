@@ -14,6 +14,10 @@ import { X, Star, Heart, ExternalLink, BookOpen } from 'lucide-react';
 import { Paper } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css'; // KaTeX styles for math rendering
+
 interface PaperCardProps {
   paper: Paper;
   summary: string;
@@ -101,14 +105,14 @@ export default function PaperCard({
                           prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mt-3 prose-headings:mb-2
                           prose-p:text-gray-700 prose-p:my-1.5 prose-p:leading-relaxed
                           prose-strong:text-gray-900 prose-strong:font-semibold
-                          prose-ul:my-2 prose-ul:list-disc prose-ul:pl-5 prose-ul:text-gray-700
-                          prose-ol:my-2 prose-ol:list-decimal prose-ol:pl-5 prose-ol:text-gray-700
-                          prose-li:text-gray-700 prose-li:my-0.5 prose-li:leading-relaxed
-                          prose-em:text-gray-600 prose-em:italic prose-em:not-italic
-                          prose-code:text-yuzu-700 prose-code:bg-yuzu-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-medium
-                          prose-a:text-yuzu-600 prose-a:no-underline hover:prose-a:underline prose-a:font-medium
-                          prose-blockquote:border-yuzu-300 prose-blockquote:text-gray-600 prose-blockquote:italic">
+                          prose-ul:my-2 prose-ul:list-disc prose-ul:pl-5
+                          prose-ol:my-2 prose-ol:list-decimal prose-ol:pl-5
+                          prose-li:text-gray-700 prose-li:my-1
+                          prose-em:text-gray-600 prose-em:italic
+                          prose-code:text-yuzu-700 prose-code:bg-yuzu-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
             <ReactMarkdown
+              remarkPlugins={[remarkMath]}
+              rehypePlugins={[rehypeKatex]}
               components={{
                 // Prevent external links from opening in same tab
                 a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,

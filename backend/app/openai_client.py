@@ -12,6 +12,8 @@ from openai import OpenAI
 from typing import Dict, Literal, Optional
 import hashlib
 from app.config import settings
+import json
+import re
 
 
 class OpenAIClient:
@@ -60,7 +62,9 @@ Focus on:
 
 Make it easy to understand, like explaining to a smart friend over coffee.
 Avoid jargon unless necessary. Be enthusiastic about interesting findings!
-Format as markdown bullet points. Start immediately with the first bullet point.
+Format as markdown bullet points.
+Add bold to highlight specific important words
+Do not include the title of the paper
 
 Abstract:
 {abstract}
@@ -84,7 +88,11 @@ Cover:
 - How the method works (high-level architecture)
 
 Be specific but concise. Use technical terms where appropriate.
-Format as markdown bullet points.
+Don't shy away from using equations and such details to explain the paper's methodology.
+For in-text latex for math, use the dollar sign $some latex$
+Format as markdown headers (##) and bullet points.
+Add bold to highlight specific important words in-text
+Do not include the title of the paper
 
 Full Paper Text:
 {full_text}
@@ -121,6 +129,11 @@ Provide a thorough summary covering:
 - Future research directions suggested
 
 Be very specific about numbers, percentages, performance metrics, and comparisons with baselines.
+Format as markdown headers (##) and bullet points.
+Add bold to highlight specific important words in-text
+Never reference the paper directly
+Do not include the title of the paper
+For in-text latex for math, use the dollar sign $some latex$
 
 Full Paper Text:
 {full_text}
@@ -185,29 +198,48 @@ Summary:"""
         try:
             print(f"Generating level {level} summary...")
             
-            # Call Gemini API via OpenAI SDK
+            # Call Gemini API via OpenAI SDK, expecting JSON output
             response = self.client.chat.completions.create(
                 model="gemini-2.5-flash-lite",
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are an expert at summarizing academic papers in an engaging, accessible way while maintaining accuracy."
+                        "content": (
+                            "You are an expert at summarizing academic papers."
+                        ),
                     },
                     {
                         "role": "user",
-                        "content": prompt
-                    }
+                        "content": prompt,
+                    },
                 ],
-                max_tokens=300,  # Limit output length
-                temperature=0.7,  # Slight creativity
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "paper_summary",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                            "summary_markdown": {
+                                "type": "string",
+                                "description": (
+                                    "A full markdown-formatted summary of the paper, ready to display. "
+                                    "Include headers and bullet points and formatting yourself. "
+                                    "Do NOT include any JSON or explanations outside the markdown content."
+                                )
+                            }
+                        },
+                        "required": ["summary_markdown"],
+                            "additionalProperties": False,
+                        },
+                    },
+                },
+                max_tokens=20000,
+                temperature=0.7,
             )
-            
-            # Extract summary from response
-            summary = response.choices[0].message.content
-            if not summary:
-                raise Exception("Gemini returned empty response")
-            
-            summary = summary.strip()
+
+            print(response.choices[0].message.content)
+            summary = json.loads(response.choices[0].message.content).get("summary_markdown", "").strip()
             
             # Cache the result
             self.cache[cache_key] = summary

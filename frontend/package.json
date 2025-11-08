@@ -13,13 +13,16 @@
     "axios": "^1.6.7",
     "canvas-confetti": "^1.9.3",
     "framer-motion": "^11.0.3",
+    "katex": "^0.16.25",
     "lucide-react": "^0.344.0",
-    "next": "14.2.5",
+    "next": "^14.2.33",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-error-boundary": "^6.0.0",
     "react-markdown": "^10.1.0",
     "react-swipeable": "^7.0.1"
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.6.4",

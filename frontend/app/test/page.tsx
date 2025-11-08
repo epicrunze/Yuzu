@@ -16,7 +16,7 @@ export default function TestPage() {
         console.log('API URL:', process.env.NEXT_PUBLIC_API_URL || 'https://api-yuzu.epicrunze.com');
         
         // Search for newest papers sorted by submission date (better HTML availability)
-        const results = await paperAPI.search('large language models', 10, 'submittedDate');
+        const results = await paperAPI.search('large language models', 5, 'submittedDate');
         console.log('Received papers:', results.length);
         
         if (!Array.isArray(results)) {

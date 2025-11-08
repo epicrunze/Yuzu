@@ -101,9 +101,9 @@ export default function PaperCard({
       {/* Summary Content */}
       <div className="mb-6 min-h-[180px]">
         {summary ? (
-          <div className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none
-                          prose-headings:text-gray-900 prose-headings:font-bold
-                          prose-p:text-gray-700 prose-p:my-2
+          <div className="prose prose-sm max-w-none
+                          prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mt-3 prose-headings:mb-2
+                          prose-p:text-gray-700 prose-p:my-1.5 prose-p:leading-relaxed
                           prose-strong:text-gray-900 prose-strong:font-semibold
                           prose-ul:my-2 prose-ul:list-disc prose-ul:pl-5
                           prose-ol:my-2 prose-ol:list-decimal prose-ol:pl-5
@@ -113,12 +113,19 @@ export default function PaperCard({
             <ReactMarkdown
               remarkPlugins={[remarkMath]}
               rehypePlugins={[rehypeKatex]}
+              components={{
+                // Prevent external links from opening in same tab
+                a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
+                // Ensure code blocks are inline by default
+                code: ({ node, inline, ...props }) => 
+                  inline ? <code {...props} /> : <code className="block" {...props} />
+              }}
             >
               {summary}
             </ReactMarkdown>
           </div>
         ) : (
-          <div className="text-gray-400 italic">
+          <div className="text-gray-400 italic text-sm">
             Loading summary...
           </div>
         )}

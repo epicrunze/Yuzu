@@ -12,6 +12,7 @@
 import { motion } from 'framer-motion';
 import { X, Star, Heart, ExternalLink, BookOpen } from 'lucide-react';
 import { Paper } from '@/lib/types';
+import ReactMarkdown from 'react-markdown';
 
 interface PaperCardProps {
   paper: Paper;
@@ -95,13 +96,23 @@ export default function PaperCard({
 
       {/* Summary Content */}
       <div className="mb-6 min-h-[180px]">
-        <div className="text-sm text-gray-700 leading-relaxed">
-          {summary || (
-            <div className="text-gray-400 italic">
-              Loading summary...
-            </div>
-          )}
-        </div>
+        {summary ? (
+          <div className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none
+                          prose-headings:text-gray-900 prose-headings:font-bold
+                          prose-p:text-gray-700 prose-p:my-2
+                          prose-strong:text-gray-900 prose-strong:font-semibold
+                          prose-ul:my-2 prose-ul:list-disc prose-ul:pl-5
+                          prose-ol:my-2 prose-ol:list-decimal prose-ol:pl-5
+                          prose-li:text-gray-700 prose-li:my-1
+                          prose-em:text-gray-600 prose-em:italic
+                          prose-code:text-yuzu-700 prose-code:bg-yuzu-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
+            <ReactMarkdown>{summary}</ReactMarkdown>
+          </div>
+        ) : (
+          <div className="text-gray-400 italic">
+            Loading summary...
+          </div>
+        )}
       </div>
 
       {/* Action Buttons */}

@@ -44,3 +44,22 @@ class SearchResponse(BaseModel):
     query: str
     count: int
 
+class BibtexGenerateRequest(BaseModel):
+    """Request to generate BibTeX for a single paper"""
+    id: str
+    title: str
+    authors: List[str]
+    abstract: str
+    published: str
+    pdf_url: str
+    arxiv_url: str
+    categories: List[str]
+
+class BibtexGenerateResponse(BaseModel):
+    """BibTeX citation for a single paper"""
+    bibtex: str
+
+class BibtexExportRequest(BaseModel):
+    """Request to export multiple papers as BibTeX file"""
+    papers: List[Paper] = Field(..., description="List of papers to export")
+

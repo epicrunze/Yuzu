@@ -51,15 +51,16 @@ class OpenAIClient:
         """
         return f"""You are helping researchers browse papers quickly on Yuzu, an app for discovering research.
 
-Summarize this abstract in 3-4 SHORT sentences using simple, friendly language.
+Summarize this abstract in 3-4 SHORT bullet points using simple, friendly language.
 
 Focus on:
 - What problem does this research tackle?
 - What's their approach or solution?
 - Why should someone care about this?
 
-Make it conversational and easy to understand, like explaining to a smart friend over coffee.
+Make it easy to understand, like explaining to a smart friend over coffee.
 Avoid jargon unless necessary. Be enthusiastic about interesting findings!
+Format as markdown bullet points. Start immediately with the first bullet point.
 
 Abstract:
 {abstract}

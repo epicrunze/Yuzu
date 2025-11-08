@@ -1,15 +1,21 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from typing import List, Dict
 from app.models import (
     SearchResponse, 
     SummarizeRequest, 
     SummarizeResponse,
     BatchSummarizeRequest,
-    BatchSummarizeResponse
+    BatchSummarizeResponse,
+    BibtexGenerateRequest,
+    BibtexGenerateResponse,
+    BibtexExportRequest,
+    Paper
 )
 from app.arxiv_client import arxiv_client
 from app.openai_client import openai_client
+from app.bibtex import paper_to_bibtex, papers_to_bibtex_file
 
 app = FastAPI(
     title="Yuzu API",
@@ -183,6 +189,64 @@ async def batch_summarize(request: BatchSummarizeRequest):
             summaries[paper.id] = "Summary unavailable"
     
     return BatchSummarizeResponse(summaries=summaries)
+
+@app.post("/api/bibtex/generate", response_model=BibtexGenerateResponse)
+async def generate_bibtex(paper: BibtexGenerateRequest):
+    """
+    Generate BibTeX citation for a single paper
+    
+    Returns properly formatted BibTeX entry with:
+    - Citation key (AuthorYearTitle format)
+    - All paper metadata
+    - ArXiv information
+    """
+    try:
+        bibtex = paper_to_bibtex(paper.dict())
+        return BibtexGenerateResponse(bibtex=bibtex)
+    except Exception as e:
+        print(f"BibTeX generation error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate BibTeX: {str(e)}"
+        )
+
+@app.post("/api/bibtex/export")
+async def export_bibtex(request: BibtexExportRequest):
+    """
+    Export multiple papers as a .bib file
+    
+    Returns a downloadable BibTeX file containing all provided papers.
+    Includes header with metadata and timestamp.
+    """
+    try:
+        if not request.papers:
+            raise HTTPException(
+                status_code=400,
+                detail="No papers provided for export"
+            )
+        
+        # Convert papers to dicts for bibtex generation
+        papers_data = [paper.dict() for paper in request.papers]
+        
+        # Generate complete BibTeX file
+        bibtex_content = papers_to_bibtex_file(papers_data)
+        
+        # Return as downloadable file
+        return Response(
+            content=bibtex_content,
+            media_type="application/x-bibtex",
+            headers={
+                "Content-Disposition": "attachment; filename=yuzu-references.bib"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"BibTeX export error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to export BibTeX: {str(e)}"
+        )
 
 if __name__ == "__main__":
     import uvicorn

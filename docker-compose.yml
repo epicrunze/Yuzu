@@ -4,27 +4,25 @@ services:
   backend:
     build: ./backend
     container_name: yuzu-backend
-    ports:
-      - "8000:8000"
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - ENVIRONMENT=development
+      - ENVIRONMENT=production
     volumes:
       - ./backend:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8282 --reload
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8282/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - yuzu-network
 
   frontend:
     build: ./frontend
     container_name: yuzu-frontend
-    ports:
-      - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=https://api-yuzu.epicrunze.com
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -32,4 +30,10 @@ services:
     depends_on:
       - backend
     command: npm run dev
+    networks:
+      - yuzu-network
 
+networks:
+  yuzu-network:
+    external: true
+    name: yuzu-network

@@ -21,8 +21,8 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",  # Local frontend
-        "http://frontend:3000",   # Docker frontend
+        "https://yuzu.epicrunze.com",  # Production frontend
+        "https://api-yuzu.epicrunze.com",  # Production API (for docs/testing)
     ],
     allow_credentials=True,
     allow_methods=["*"],

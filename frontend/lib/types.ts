@@ -21,3 +21,14 @@ export interface SavedPaper extends Paper {
   currentLevel: number;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
+}
+
+export interface PaperChat {
+  paperId: string;
+  messages: ChatMessage[];
+}
+

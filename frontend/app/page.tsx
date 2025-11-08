@@ -50,6 +50,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [searchStarted, setSearchStarted] = useState(false);
   const [currentQuery, setCurrentQuery] = useState('');
+  const [currentPaper, setCurrentPaper] = useState<Paper | null>(null);
 
   const handleSearch = async (query: string) => {
     setLoading(true);
@@ -142,6 +143,11 @@ export default function Home() {
     setSearchStarted(false);
     setPapers([]);
     setError(null);
+    setCurrentPaper(null);
+  };
+
+  const handlePaperChange = (paper: Paper | null) => {
+    setCurrentPaper(paper);
   };
 
   // Show landing page if not started searching
@@ -190,13 +196,17 @@ export default function Home() {
         </div>
 
         {/* Main Swipe Interface */}
-        <SwipeInterface papers={papers} onSuperlike={handleSuperlike} />
+        <SwipeInterface 
+          papers={papers} 
+          onSuperlike={handleSuperlike}
+          onPaperChange={handlePaperChange}
+        />
         
         {/* Favorites Sidebar */}
         <FavoritesList />
         
-        {/* Chat Window (Mock) */}
-        <ChatWindow />
+        {/* Chat Window */}
+        <ChatWindow currentPaper={currentPaper} />
       </div>
     </ErrorBoundary>
   );

@@ -9,7 +9,7 @@ Level 2 & 3: Uses full paper text from ArXiv HTML (deep analysis)
 """
 
 from openai import OpenAI
-from typing import Dict, Literal, Optional
+from typing import Dict, Literal, Optional, List
 import hashlib
 from app.config import settings
 import json
@@ -273,6 +273,104 @@ Summary:"""
                 summaries[level] = f"Summary unavailable for level {level}"
         
         return summaries
+    
+    async def generate_chat_response(
+        self,
+        user_message: str,
+        paper_id: str,
+        paper_title: str,
+        paper_abstract: str,
+        paper_authors: List[str],
+        paper_published: str,
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+        include_full_text: bool = True
+    ) -> str:
+        """
+        Generate a chat response about a specific paper
+        
+        Args:
+            user_message: The user's question or message
+            paper_id: ArXiv paper ID
+            paper_title: Paper title
+            paper_abstract: Paper abstract
+            paper_authors: List of paper authors
+            paper_published: Publication date
+            conversation_history: Previous messages in the conversation
+            include_full_text: Whether to fetch and include full paper text
+        
+        Returns:
+            AI assistant's response
+            
+        Raises:
+            Exception: If API call fails
+        """
+        # Fetch full text if requested
+        paper_content = paper_abstract
+        if include_full_text:
+            from app.arxiv_client import arxiv_client
+            
+            print(f"Fetching full text for chat about paper {paper_id}...")
+            full_text = await arxiv_client.get_full_text(paper_id)
+            
+            if full_text:
+                paper_content = full_text
+                print(f"Using full text ({len(full_text)} chars)")
+            else:
+                print(f"Full text not available, using abstract")
+        
+        # Build system prompt with paper context
+        authors_str = ", ".join(paper_authors[:5])
+        if len(paper_authors) > 5:
+            authors_str += " et al."
+        
+        system_prompt = f"""You are a helpful research assistant helping users understand academic papers. 
+
+You are currently discussing this paper:
+
+Title: {paper_title}
+Authors: {authors_str}
+Published: {paper_published}
+ArXiv ID: {paper_id}
+
+Paper Content:
+{paper_content}
+
+Answer the user's questions about this paper clearly and accurately. Be specific and cite details from the paper when relevant. If the user asks something not covered in the paper, let them know politely."""
+
+        # Build message history
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add conversation history if provided
+        if conversation_history:
+            for msg in conversation_history:
+                messages.append({
+                    "role": msg.get("role", "user"),
+                    "content": msg.get("content", "")
+                })
+        
+        # Add current user message
+        messages.append({"role": "user", "content": user_message})
+        
+        try:
+            print(f"Generating chat response for: '{user_message[:50]}...'")
+            
+            # Call Gemini API
+            response = self.client.chat.completions.create(
+                model="gemini-2.5-flash-lite",
+                messages=messages,
+                max_tokens=2000,
+                temperature=0.7,
+            )
+            
+            assistant_message = response.choices[0].message.content.strip()
+            
+            print(f"Generated chat response ({len(assistant_message)} chars)")
+            
+            return assistant_message
+            
+        except Exception as e:
+            print(f"Chat API error: {e}")
+            raise Exception(f"Failed to generate chat response: {str(e)}")
 
 
 # Create singleton instance

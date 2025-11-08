@@ -11,6 +11,8 @@ from app.models import (
     BibtexGenerateRequest,
     BibtexGenerateResponse,
     BibtexExportRequest,
+    ChatRequest,
+    ChatResponse,
     Paper
 )
 from app.arxiv_client import arxiv_client
@@ -247,6 +249,67 @@ async def export_bibtex(request: BibtexExportRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to export BibTeX: {str(e)}"
+        )
+
+@app.post("/api/chat", response_model=ChatResponse)
+async def chat_about_paper(request: ChatRequest):
+    """
+    Chat with AI about a specific paper
+    
+    Provides Q&A functionality where users can ask questions about papers.
+    The AI has access to the full paper content and conversation history.
+    
+    First message automatically includes full paper context.
+    Subsequent messages maintain conversation history.
+    """
+    try:
+        # Validate message
+        if not request.message or len(request.message.strip()) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Message cannot be empty"
+            )
+        
+        if len(request.message) > 5000:
+            raise HTTPException(
+                status_code=400,
+                detail="Message too long. Maximum 5,000 characters."
+            )
+        
+        # Debug logging
+        print(f"💬 Chat request received:")
+        print(f"   Paper ID: {request.paper_id}")
+        print(f"   Message: {request.message[:100]}...")
+        print(f"   History length: {len(request.conversation_history)}")
+        print(f"   Include full text: {request.include_full_text}")
+        
+        # Convert conversation history to dict format
+        history_dicts = [
+            {"role": msg.role, "content": msg.content}
+            for msg in request.conversation_history
+        ]
+        
+        # Generate chat response
+        response_message = await openai_client.generate_chat_response(
+            user_message=request.message,
+            paper_id=request.paper_id,
+            paper_title=request.paper_title,
+            paper_abstract=request.paper_abstract,
+            paper_authors=request.paper_authors,
+            paper_published=request.paper_published,
+            conversation_history=history_dicts,
+            include_full_text=request.include_full_text
+        )
+        
+        return ChatResponse(message=response_message)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Chat endpoint error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate chat response: {str(e)}"
         )
 
 if __name__ == "__main__":

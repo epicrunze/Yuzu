@@ -19,11 +19,12 @@ import { paperAPI } from '@/lib/api';
 interface SwipeInterfaceProps {
   papers: Paper[];
   onSuperlike: (paper: Paper, level: number) => void;
+  onPaperChange?: (paper: Paper | null) => void;
 }
 
 type ExitDirection = 'left' | 'right' | null;
 
-export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfaceProps) {
+export default function SwipeInterface({ papers, onSuperlike, onPaperChange }: SwipeInterfaceProps) {
   // Current position in paper stack
   const [currentIndex, setCurrentIndex] = useState(0);
   
@@ -45,6 +46,15 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
   
   // Current paper being displayed
   const currentPaper = papers[currentIndex];
+
+  /**
+   * Notify parent when current paper changes
+   */
+  useEffect(() => {
+    if (onPaperChange) {
+      onPaperChange(currentPaper || null);
+    }
+  }, [currentPaper, onPaperChange]);
 
   /**
    * Fetch summary for specific paper and level

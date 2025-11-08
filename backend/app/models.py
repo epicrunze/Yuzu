@@ -63,3 +63,24 @@ class BibtexExportRequest(BaseModel):
     """Request to export multiple papers as BibTeX file"""
     papers: List[Paper] = Field(..., description="List of papers to export")
 
+class ChatMessage(BaseModel):
+    """A single chat message"""
+    role: str = Field(..., description="Role: 'user' or 'assistant'")
+    content: str = Field(..., description="Message content")
+    timestamp: Optional[float] = Field(None, description="Unix timestamp")
+
+class ChatRequest(BaseModel):
+    """Request to chat about a paper"""
+    message: str = Field(..., description="User's question or message")
+    paper_id: str = Field(..., description="ArXiv paper ID")
+    paper_title: str = Field(..., description="Paper title")
+    paper_abstract: str = Field(..., description="Paper abstract")
+    paper_authors: List[str] = Field(..., description="Paper authors")
+    paper_published: str = Field(..., description="Publication date")
+    conversation_history: List[ChatMessage] = Field(default_factory=list, description="Previous messages in conversation")
+    include_full_text: bool = Field(True, description="Whether to include full paper text in context")
+
+class ChatResponse(BaseModel):
+    """Response from chat endpoint"""
+    message: str = Field(..., description="Assistant's response")
+

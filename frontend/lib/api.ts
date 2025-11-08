@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { Paper } from './types';
+import { Paper, ChatMessage } from './types';
 
 // Always use the production API endpoint - no localhost
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-yuzu.epicrunze.com';
@@ -169,6 +169,46 @@ export const paperAPI = {
       });
       return response.data;
     } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  /**
+   * Chat about a specific paper
+   */
+  chat: async (
+    message: string,
+    paper: Paper,
+    conversationHistory: ChatMessage[],
+    includeFullText: boolean = true
+  ): Promise<string> => {
+    try {
+      console.log('💬 [api.ts] paperAPI.chat called');
+      console.log(`   Message: "${message.substring(0, 50)}..."`);
+      console.log(`   Paper ID: ${paper.id}`);
+      console.log(`   History length: ${conversationHistory.length}`);
+      console.log(`   Include full text: ${includeFullText}`);
+
+      const response = await api.post('/api/chat', {
+        message,
+        paper_id: paper.id,
+        paper_title: paper.title,
+        paper_abstract: paper.abstract,
+        paper_authors: paper.authors,
+        paper_published: paper.published,
+        conversation_history: conversationHistory.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp
+        })),
+        include_full_text: includeFullText
+      });
+
+      console.log('✅ [api.ts] Chat response received');
+      
+      return response.data.message;
+    } catch (error) {
+      console.error('❌ [api.ts] Chat error:', error);
       return handleError(error);
     }
   },

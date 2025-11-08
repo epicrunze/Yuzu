@@ -11,6 +11,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSwipeable } from 'react-swipeable';
 import { Paper, PaperSummary } from '@/lib/types';
 import PaperCard from './PaperCard';
 import LoadingState from './LoadingState';
@@ -204,6 +205,18 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
   }, [currentPaper, currentLevel, onSuperlike, handlePass]);
 
   /**
+   * Mobile touch gesture handlers
+   * Must be defined before any early returns (React Rules of Hooks)
+   */
+  const handlers = useSwipeable({
+    onSwipedLeft: () => !loading && handlePass(),
+    onSwipedRight: () => !loading && handleNext(),
+    preventScrollOnSwipe: true,
+    trackMouse: false, // Don't conflict with mouse events
+    delta: 50, // Minimum swipe distance
+  });
+
+  /**
    * Keyboard event handler
    * Maps keys to actions: ← pass, → next, Space superlike
    */
@@ -253,7 +266,7 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
             All done!
           </h2>
           <p className="text-gray-600 mb-4">
-            You've reviewed all {papers.length} papers.
+            You&apos;ve reviewed all {papers.length} papers.
           </p>
           <p className="text-sm text-yuzu-600">
             Check your favorites or start a new search
@@ -290,37 +303,39 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
         {loading && !currentSummary ? (
           <LoadingState key="loading" />
         ) : (
-          <motion.div
-            key={`${currentPaper.id}-${currentLevel}`}
-            initial={{ 
-              x: swipeDirection === 'right' ? 100 : -100,
-              opacity: 0,
-              rotate: swipeDirection === 'right' ? 5 : -5
-            }}
-            animate={{ 
-              x: 0,
-              opacity: 1,
-              rotate: 0
-            }}
-            exit={{ 
-              x: swipeDirection === 'left' ? -400 : swipeDirection === 'right' ? 400 : 0,
-              opacity: 0,
-              rotate: swipeDirection === 'left' ? -15 : swipeDirection === 'right' ? 15 : 0
-            }}
-            transition={{ 
-              duration: 0.3,
-              ease: [0.4, 0, 0.2, 1]
-            }}
-          >
-            <PaperCard
-              paper={currentPaper}
-              summary={currentSummary}
-              level={currentLevel}
-              onPass={handlePass}
-              onSuperlike={handleSuperlike}
-              onNext={handleNext}
-            />
-          </motion.div>
+          <div {...handlers}>
+            <motion.div
+              key={`${currentPaper.id}-${currentLevel}`}
+              initial={{ 
+                x: swipeDirection === 'right' ? 100 : -100,
+                opacity: 0,
+                rotate: swipeDirection === 'right' ? 5 : -5
+              }}
+              animate={{ 
+                x: 0,
+                opacity: 1,
+                rotate: 0
+              }}
+              exit={{ 
+                x: swipeDirection === 'left' ? -400 : swipeDirection === 'right' ? 400 : 0,
+                opacity: 0,
+                rotate: swipeDirection === 'left' ? -15 : swipeDirection === 'right' ? 15 : 0
+              }}
+              transition={{ 
+                duration: 0.3,
+                ease: [0.4, 0, 0.2, 1]
+              }}
+            >
+              <PaperCard
+                paper={currentPaper}
+                summary={currentSummary}
+                level={currentLevel}
+                onPass={handlePass}
+                onSuperlike={handleSuperlike}
+                onNext={handleNext}
+              />
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

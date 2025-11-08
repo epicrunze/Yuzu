@@ -16,6 +16,8 @@ import ResearchInput from '@/components/ResearchInput';
 import SwipeInterface from '@/components/SwipeInterface';
 import FavoritesList from '@/components/FavoritesList';
 import ChatWindow from '@/components/ChatWindow';
+import { ToastContainer, showToast } from '@/components/Toast';
+import { triggerSuperlikeConfetti, triggerFirstSuperlikeConfetti } from '@/lib/confetti';
 import { Paper, SavedPaper } from '@/lib/types';
 import { paperAPI, APIError } from '@/lib/api';
 
@@ -108,6 +110,7 @@ export default function Home() {
       // Check if already saved
       if (existing.some(p => p.id === paper.id)) {
         console.log('Paper already in favorites');
+        showToast('Already in favorites!', 'info');
         return;
       }
       
@@ -118,11 +121,20 @@ export default function Home() {
       // Dispatch event to update FavoritesList
       window.dispatchEvent(new Event('yuzu:favorite-added'));
       
+      // Trigger confetti!
+      if (updated.length === 1) {
+        triggerFirstSuperlikeConfetti(); // Extra special for first save
+        showToast('🎉 First paper saved! Keep going!', 'success');
+      } else {
+        triggerSuperlikeConfetti();
+        showToast('Paper saved to favorites!', 'success');
+      }
+      
       console.log(`Saved! Total favorites: ${updated.length}`);
       
     } catch (err) {
       console.error('Failed to save paper:', err);
-      // Don't block user flow on save failure
+      showToast('Failed to save paper', 'error');
     }
   };
 
@@ -136,6 +148,7 @@ export default function Home() {
   if (!searchStarted) {
     return (
       <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ToastContainer />
         <ResearchInput onSubmit={handleSearch} loading={loading} />
         
         {error && (
@@ -156,6 +169,7 @@ export default function Home() {
   // Show swipe interface
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <ToastContainer />
       <div className="min-h-screen p-4 sm:p-8">
         {/* Header with query and new search button */}
         <div className="max-w-2xl mx-auto mb-8">

@@ -73,7 +73,7 @@ export default function ChatWindow() {
                   Chat Coming Soon!
                 </h4>
                 <p className="text-sm leading-relaxed">
-                  Soon you'll be able to ask questions about papers and get 
+                  Soon you&apos;ll be able to ask questions about papers and get 
                   instant answers powered by AI. 
                 </p>
                 <p className="text-xs mt-3 text-yuzu-600">

@@ -44,7 +44,7 @@ export default function PaperCard({
 
   return (
     <motion.div
-      className="bg-white rounded-card shadow-yuzu-lg p-6 w-full max-w-md mx-auto
+      className="bg-white rounded-card shadow-yuzu-lg p-4 sm:p-6 w-full max-w-md mx-auto
                  hover:shadow-yuzu transition-shadow duration-300"
       initial={{ scale: 0.95, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
@@ -116,9 +116,8 @@ export default function PaperCard({
               components={{
                 // Prevent external links from opening in same tab
                 a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
-                // Ensure code blocks are inline by default
-                code: ({ node, inline, ...props }) => 
-                  inline ? <code {...props} /> : <code className="block" {...props} />
+                // Custom code rendering
+                code: ({ node, ...props }: any) => <code {...props} />
               }}
             >
               {summary}
@@ -132,7 +131,7 @@ export default function PaperCard({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center justify-center gap-3 sm:gap-4">
         {/* Pass Button */}
         <button
           onClick={onPass}

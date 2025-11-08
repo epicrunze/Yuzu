@@ -11,6 +11,7 @@
   "dependencies": {
     "@tailwindcss/typography": "^0.5.19",
     "axios": "^1.6.7",
+    "canvas-confetti": "^1.9.3",
     "framer-motion": "^11.0.3",
     "katex": "^0.16.25",
     "lucide-react": "^0.344.0",
@@ -19,10 +20,12 @@
     "react-dom": "^18.3.1",
     "react-error-boundary": "^6.0.0",
     "react-markdown": "^10.1.0",
+    "react-swipeable": "^7.0.1"
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0"
   },
   "devDependencies": {
+    "@types/canvas-confetti": "^1.6.4",
     "@types/node": "^20.11.5",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",

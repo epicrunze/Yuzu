@@ -1,2 +1,3 @@
-# Linder
+# Yuzu
+
 Duke AI Hackathon Project

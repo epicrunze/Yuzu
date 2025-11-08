@@ -57,9 +57,15 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
     setLoading(true);
     try {
       console.log(`Fetching summary for ${paper.id} level ${level}`);
+      console.log(`Paper details - ID: "${paper.id}", Title: "${paper.title}"`);
       
-      // Call backend API
-      const summary = await paperAPI.summarize(paper.abstract, level);
+      // Validate paper ID exists
+      if (!paper.id) {
+        throw new Error('Paper ID is missing - cannot fetch summary');
+      }
+      
+      // Call backend API (pass paper_id for levels 2-3 full text analysis)
+      const summary = await paperAPI.summarize(paper.abstract, level, paper.id);
       
       // Update cache
       setSummaries(prev => {
@@ -75,16 +81,9 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
     } catch (error) {
       console.error(`Failed to fetch summary for ${paper.id}:`, error);
       
-      // Fallback to abstract if summary fails
-      setSummaries(prev => {
-        const updated = new Map(prev);
-        const paperSummaries = updated.get(paper.id) || {};
-        updated.set(paper.id, {
-          ...paperSummaries,
-          [`level${level}`]: paper.abstract,
-        });
-        return updated;
-      });
+      // Don't cache failed summaries - let user see the error
+      // Optionally show an error message in the UI instead
+      // DO NOT fallback to abstract or previous level summaries
     } finally {
       setLoading(false);
     }

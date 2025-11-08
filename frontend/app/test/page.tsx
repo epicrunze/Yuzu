@@ -15,7 +15,8 @@ export default function TestPage() {
         console.log('Fetching papers from API...');
         console.log('API URL:', process.env.NEXT_PUBLIC_API_URL || 'https://api-yuzu.epicrunze.com');
         
-        const results = await paperAPI.search('transformers', 10);
+        // Search for newest papers sorted by submission date (better HTML availability)
+        const results = await paperAPI.search('large language models', 10, 'submittedDate');
         console.log('Received papers:', results.length);
         
         if (!Array.isArray(results)) {
@@ -81,6 +82,9 @@ export default function TestPage() {
       <h1 className="text-3xl font-bold text-center mb-8 text-gray-900">
         Yuzu Swipe Test
       </h1>
+      <p className="text-center text-gray-600 mb-4">
+        Testing with newest papers (sorted by submission date) - {papers.length} papers loaded
+      </p>
       
       <SwipeInterface papers={papers} onSuperlike={handleSuperlike} />
     </div>

@@ -50,6 +50,11 @@ async def search_papers(
         ge=1, 
         le=100, 
         description="Number of papers to return"
+    ),
+    sort_by: str = Query(
+        "relevance",
+        description="Sort order: relevance, submittedDate, or lastUpdatedDate",
+        regex="^(relevance|submittedDate|lastUpdatedDate)$"
     )
 ):
     """
@@ -62,10 +67,11 @@ async def search_papers(
     - Categories
     
     Results are cached to improve performance.
+    Sort by submittedDate to get newest papers (better HTML availability).
     """
     try:
-        # Call ArXiv client
-        papers = arxiv_client.search(query, max_results)
+        # Call ArXiv client with sort parameter
+        papers = arxiv_client.search(query, max_results, sort_by)
         
         return SearchResponse(
             papers=papers,
@@ -94,6 +100,11 @@ async def summarize_paper(request: SummarizeRequest):
     Summaries are cached to improve performance and reduce costs.
     """
     try:
+        # Debug logging
+        print(f"📨 Summarize request received:")
+        print(f"   Level: {request.level}")
+        print(f"   Paper ID: {request.paper_id!r}")
+        print(f"   Abstract length: {len(request.abstract) if request.abstract else 0} chars")
         # Validate abstract length
         if not request.abstract or len(request.abstract) < 50:
             raise HTTPException(
@@ -111,7 +122,7 @@ async def summarize_paper(request: SummarizeRequest):
         if request.level in [2, 3] and not request.paper_id:
             raise HTTPException(
                 status_code=400,
-                detail=f"paper_id is required for level {request.level} summaries (full text analysis)"
+                detail=f"paper_id is required for level {request.level} summaries (full text analysis). Received: {request.paper_id!r}"
             )
         
         # Generate summary

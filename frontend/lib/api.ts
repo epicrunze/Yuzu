@@ -48,11 +48,19 @@ export const paperAPI = {
   /**
    * Search for papers on ArXiv
    */
-  search: async (query: string, maxResults: number = 20): Promise<Paper[]> => {
+  search: async (
+    query: string, 
+    maxResults: number = 20,
+    sortBy: 'relevance' | 'submittedDate' | 'lastUpdatedDate' = 'relevance'
+  ): Promise<Paper[]> => {
     try {
-      console.log(`API: Searching for "${query}" with max ${maxResults} results`);
+      console.log(`API: Searching for "${query}" with max ${maxResults} results, sorted by ${sortBy}`);
       const response = await api.get('/api/search', {
-        params: { query, max_results: maxResults }
+        params: { 
+          query, 
+          max_results: maxResults,
+          sort_by: sortBy
+        }
       });
       console.log('API: Response received:', response.data);
       
@@ -70,12 +78,22 @@ export const paperAPI = {
   /**
    * Generate summary for a paper
    */
-  summarize: async (abstract: string, level: 1 | 2 | 3): Promise<string> => {
+  summarize: async (abstract: string, level: 1 | 2 | 3, paperId?: string): Promise<string> => {
     try {
-      const response = await api.post('/api/summarize', {
+      const requestBody: any = {
         abstract,
-        level
-      });
+        level,
+      };
+      
+      // Always include paper_id if provided (required for levels 2-3)
+      if (paperId) {
+        requestBody.paper_id = paperId;
+      }
+      
+      console.log(`API: Summarize request - Level ${level}, Paper ID: ${paperId || 'none'}`);
+      console.log('API: Request body:', JSON.stringify(requestBody, null, 2));
+      
+      const response = await api.post('/api/summarize', requestBody);
       return response.data.summary;
     } catch (error) {
       return handleError(error);

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
 
 class Paper(BaseModel):
@@ -23,10 +23,20 @@ class SummarizeRequest(BaseModel):
     """Request to generate paper summary"""
     abstract: str
     level: int = Field(..., ge=1, le=3, description="Detail level (1-3)")
+    paper_id: Optional[str] = Field(None, description="ArXiv paper ID (required for levels 2-3)")
 
 class SummarizeResponse(BaseModel):
     """Summary response"""
     summary: str
+
+class BatchSummarizeRequest(BaseModel):
+    """Request to summarize multiple papers at once"""
+    papers: List[Paper]
+    level: int = Field(1, ge=1, le=3, description="Detail level (1-3)")
+
+class BatchSummarizeResponse(BaseModel):
+    """Response with summaries keyed by paper ID"""
+    summaries: Dict[str, str]
 
 class SearchResponse(BaseModel):
     """Response from paper search"""

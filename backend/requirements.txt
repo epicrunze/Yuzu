@@ -6,4 +6,5 @@ openai==1.10.0
 feedparser==6.0.10
 httpx==0.26.0
 python-dotenv==1.0.0
+beautifulsoup4==4.12.3
 

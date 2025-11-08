@@ -10,6 +10,8 @@ import re
 from typing import List, Optional, Dict
 from datetime import datetime
 from urllib.parse import urlencode
+import httpx
+from bs4 import BeautifulSoup
 from app.models import Paper
 
 
@@ -22,6 +24,8 @@ class ArxivClient:
         # Simple in-memory cache to avoid duplicate API calls
         # Key format: "query:max_results:sort_by"
         self.cache: Dict[str, List[Paper]] = {}
+        # Cache for full text content
+        self.fulltext_cache: Dict[str, str] = {}
     
     def search(
         self, 
@@ -162,6 +166,85 @@ class ArxivClient:
             
         except Exception as e:
             print(f"Error parsing entry: {e}")
+            return None
+    
+    async def get_full_text(self, paper_id: str) -> Optional[str]:
+        """
+        Fetch full text content from ArXiv HTML page
+        
+        Args:
+            paper_id: ArXiv paper ID (e.g., "1706.03762")
+        
+        Returns:
+            Full text of the paper, or None if not available
+        """
+        # Check cache first
+        if paper_id in self.fulltext_cache:
+            print(f"Full text cache hit for {paper_id}")
+            return self.fulltext_cache[paper_id]
+        
+        # Try HTML version first (newer papers have this)
+        html_url = f"https://arxiv.org/html/{paper_id}"
+        
+        try:
+            print(f"Fetching full text from {html_url}")
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(html_url, follow_redirects=True)
+                
+                # Check if HTML version exists
+                if response.status_code == 200 and 'text/html' in response.headers.get('content-type', ''):
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    
+                    # Extract main article content
+                    # ArXiv HTML typically has content in article tags or main content divs
+                    article = soup.find('article') or soup.find('div', class_='ltx_page_main')
+                    
+                    if article:
+                        # Remove script and style elements
+                        for script in article(['script', 'style', 'nav', 'header', 'footer']):
+                            script.decompose()
+                        
+                        # Get text content
+                        text = article.get_text(separator='\n', strip=True)
+                        
+                        # Clean up excessive whitespace
+                        text = re.sub(r'\n\s*\n', '\n\n', text)
+                        text = re.sub(r' +', ' ', text)
+                        
+                        # Limit to reasonable size (first 50k chars to avoid token limits)
+                        if len(text) > 50000:
+                            text = text[:50000] + "\n\n[Content truncated due to length...]"
+                        
+                        # Cache the result
+                        self.fulltext_cache[paper_id] = text
+                        
+                        print(f"Successfully fetched full text for {paper_id} ({len(text)} chars)")
+                        return text
+                    
+                # If HTML version not available, try to extract from abs page
+                print(f"HTML version not available for {paper_id}, trying abstract page")
+                abs_url = f"https://arxiv.org/abs/{paper_id}"
+                response = await client.get(abs_url)
+                
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    
+                    # Get abstract as fallback
+                    abstract_block = soup.find('blockquote', class_='abstract')
+                    if abstract_block:
+                        abstract_text = abstract_block.get_text(strip=True)
+                        # Remove "Abstract:" prefix if present
+                        abstract_text = re.sub(r'^Abstract:\s*', '', abstract_text)
+                        
+                        print(f"Falling back to abstract for {paper_id} (full text not available)")
+                        return abstract_text
+                
+                print(f"Could not fetch full text for {paper_id}")
+                return None
+                
+        except Exception as e:
+            print(f"Error fetching full text for {paper_id}: {e}")
             return None
 
 

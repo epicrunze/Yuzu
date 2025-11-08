@@ -11,7 +11,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSwipeable } from 'react-swipeable';
 import { Paper, PaperSummary } from '@/lib/types';
 import PaperCard from './PaperCard';
 import LoadingState from './LoadingState';
@@ -22,7 +21,7 @@ interface SwipeInterfaceProps {
   onSuperlike: (paper: Paper, level: number) => void;
 }
 
-type SwipeDirection = 'left' | 'right' | null;
+type ExitDirection = 'left' | 'right' | null;
 
 export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfaceProps) {
   // Current position in paper stack
@@ -37,8 +36,12 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
   // Loading state for summary generation
   const [loading, setLoading] = useState(false);
   
-  // Animation direction
-  const [swipeDirection, setSwipeDirection] = useState<SwipeDirection>(null);
+  // Exit animation coordinates for programmatic animations (buttons/keyboard)
+  const [exitX, setExitX] = useState<number | null>(null);
+  const [exitY, setExitY] = useState<number | null>(null);
+  
+  // Track previous exit direction for entrance animations
+  const [previousExitDirection, setPreviousExitDirection] = useState<ExitDirection>(null);
   
   // Current paper being displayed
   const currentPaper = papers[currentIndex];
@@ -147,13 +150,10 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
       return;
     }
 
-    setSwipeDirection('left');
-    
-    setTimeout(() => {
-      setCurrentIndex(prev => prev + 1);
-      setCurrentLevel(1); // Reset to level 1 for new paper
-      setSwipeDirection(null);
-    }, 300);
+    // Trigger programmatic exit animation to the left
+    setExitX(-400);
+    setExitY(0);
+    setPreviousExitDirection('left');
   }, [currentIndex, papers.length]);
 
   /**
@@ -162,12 +162,10 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
    */
   const handleNext = useCallback(() => {
     if (currentLevel < 3) {
-      // Go to next detail level
-      setSwipeDirection('right');
-      setTimeout(() => {
-        setCurrentLevel(prev => (prev + 1) as 1 | 2 | 3);
-        setSwipeDirection(null);
-      }, 200);
+      // Go to next detail level - trigger exit animation to the right
+      setExitX(400);
+      setExitY(0);
+      setPreviousExitDirection('right');
     } else {
       // Already at level 3 - user has read all the way through
       // Auto-save the paper and move to next
@@ -191,30 +189,40 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
     // Always save the paper
     onSuperlike(currentPaper, currentLevel);
     
+    // Move to next level or next paper (without exit animation)
     if (currentLevel < 3) {
-      // Elevate to next level to see more details
-      setSwipeDirection('right');
-      setTimeout(() => {
-        setCurrentLevel(prev => (prev + 1) as 1 | 2 | 3);
-        setSwipeDirection(null);
-      }, 200);
+      setCurrentLevel(prev => (prev + 1) as 1 | 2 | 3);
     } else {
-      // Already at max level, move to next paper
-      handlePass();
+      // At level 3, move to next paper
+      setCurrentIndex(prev => prev + 1);
+      setCurrentLevel(1);
     }
-  }, [currentPaper, currentLevel, onSuperlike, handlePass]);
+  }, [currentPaper, currentLevel, onSuperlike]);
 
   /**
-   * Mobile touch gesture handlers
-   * Must be defined before any early returns (React Rules of Hooks)
+   * Handle animation completion callback from PaperCard
+   * Called when card finishes exit animation
    */
-  const handlers = useSwipeable({
-    onSwipedLeft: () => !loading && handlePass(),
-    onSwipedRight: () => !loading && handleNext(),
-    preventScrollOnSwipe: true,
-    trackMouse: false, // Don't conflict with mouse events
-    delta: 50, // Minimum swipe distance
-  });
+  const handleAnimationComplete = useCallback((direction: ExitDirection) => {
+    if (direction === 'left') {
+      // Pass - move to next paper
+      setCurrentIndex(prev => prev + 1);
+      setCurrentLevel(1);
+    } else if (direction === 'right') {
+      // Next level
+      if (currentLevel < 3) {
+        setCurrentLevel(prev => (prev + 1) as 1 | 2 | 3);
+      } else {
+        // At level 3, move to next paper
+        setCurrentIndex(prev => prev + 1);
+        setCurrentLevel(1);
+      }
+    }
+    
+    // Reset exit coordinates
+    setExitX(null);
+    setExitY(null);
+  }, [currentLevel]);
 
   /**
    * Keyboard event handler
@@ -303,39 +311,19 @@ export default function SwipeInterface({ papers, onSuperlike }: SwipeInterfacePr
         {loading && !currentSummary ? (
           <LoadingState key="loading" />
         ) : (
-          <div {...handlers}>
-            <motion.div
-              key={`${currentPaper.id}-${currentLevel}`}
-              initial={{ 
-                x: swipeDirection === 'right' ? 100 : -100,
-                opacity: 0,
-                rotate: swipeDirection === 'right' ? 5 : -5
-              }}
-              animate={{ 
-                x: 0,
-                opacity: 1,
-                rotate: 0
-              }}
-              exit={{ 
-                x: swipeDirection === 'left' ? -400 : swipeDirection === 'right' ? 400 : 0,
-                opacity: 0,
-                rotate: swipeDirection === 'left' ? -15 : swipeDirection === 'right' ? 15 : 0
-              }}
-              transition={{ 
-                duration: 0.3,
-                ease: [0.4, 0, 0.2, 1]
-              }}
-            >
-              <PaperCard
-                paper={currentPaper}
-                summary={currentSummary}
-                level={currentLevel}
-                onPass={handlePass}
-                onSuperlike={handleSuperlike}
-                onNext={handleNext}
-              />
-            </motion.div>
-          </div>
+          <PaperCard
+            key={`${currentPaper.id}-${currentLevel}`}
+            paper={currentPaper}
+            summary={currentSummary}
+            level={currentLevel}
+            onPass={handlePass}
+            onSuperlike={handleSuperlike}
+            onNext={handleNext}
+            exitX={exitX}
+            exitY={exitY}
+            previousExitDirection={previousExitDirection}
+            onAnimationComplete={handleAnimationComplete}
+          />
         )}
       </AnimatePresence>
 

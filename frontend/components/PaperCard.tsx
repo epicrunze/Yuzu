@@ -9,14 +9,17 @@
  * Design: White card with yuzu yellow accents, warm shadow
  */
 
-import { motion } from 'framer-motion';
+import { motion, PanInfo, useMotionValue, useTransform } from 'framer-motion';
 import { X, Star, Heart, ExternalLink, BookOpen } from 'lucide-react';
 import { Paper } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
+import { useState } from 'react';
 
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css'; // KaTeX styles for math rendering
+
+type ExitDirection = 'left' | 'right' | null;
 
 interface PaperCardProps {
   paper: Paper;
@@ -25,6 +28,10 @@ interface PaperCardProps {
   onPass: () => void;
   onSuperlike: () => void;
   onNext: () => void;
+  exitX: number | null;
+  exitY: number | null;
+  previousExitDirection: ExitDirection;
+  onAnimationComplete: (direction: ExitDirection) => void;
 }
 
 export default function PaperCard({
@@ -33,23 +40,102 @@ export default function PaperCard({
   level,
   onPass,
   onSuperlike,
-  onNext
+  onNext,
+  exitX,
+  exitY,
+  previousExitDirection,
+  onAnimationComplete
 }: PaperCardProps) {
+  // Track if card is being dragged
+  const [isDragging, setIsDragging] = useState(false);
+  
+  // Motion values for drag tracking
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  
+  // Calculate rotation based on x position (clamp between -15 and 15 degrees)
+  const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
+  
   // Format publication date
   const year = new Date(paper.published).getFullYear();
   
   // Truncate author list for display
   const displayAuthors = paper.authors.slice(0, 3);
   const hasMoreAuthors = paper.authors.length > 3;
+  
+  // Swipe threshold in pixels
+  const SWIPE_THRESHOLD = 150;
+  
+  /**
+   * Handle drag end - check if threshold is crossed
+   */
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    setIsDragging(false);
+    
+    const offsetX = info.offset.x;
+    
+    // Check if swiped left (pass)
+    if (offsetX < -SWIPE_THRESHOLD) {
+      onPass();
+      return;
+    }
+    
+    // Check if swiped right (next)
+    if (offsetX > SWIPE_THRESHOLD) {
+      onNext();
+      return;
+    }
+    
+    // If threshold not met, card will spring back to center automatically
+  };
+
+  // Determine entrance animation based on previous exit
+  const getInitialPosition = () => {
+    if (previousExitDirection === 'left') {
+      return { x: 400, opacity: 0, rotate: 15 };
+    } else if (previousExitDirection === 'right') {
+      return { x: -100, opacity: 0, rotate: -5 };
+    }
+    return { x: 0, opacity: 0, scale: 0.95 };
+  };
+  
+  // Determine if we should be in exit animation mode
+  const isExiting = exitX !== null || exitY !== null;
 
   return (
     <motion.div
       className="bg-white rounded-card shadow-yuzu-lg p-4 sm:p-6 w-full max-w-md mx-auto
-                 hover:shadow-yuzu transition-shadow duration-300"
-      initial={{ scale: 0.95, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.95, opacity: 0 }}
-      transition={{ duration: 0.3 }}
+                 hover:shadow-yuzu transition-shadow duration-300 cursor-grab active:cursor-grabbing"
+      style={{ x, y, rotate }}
+      drag="x"
+      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+      dragElastic={1}
+      onDragStart={() => setIsDragging(true)}
+      onDragEnd={handleDragEnd}
+      initial={getInitialPosition()}
+      animate={{
+        x: exitX ?? 0,
+        y: exitY ?? 0,
+        opacity: isExiting ? 0 : 1,
+        rotate: exitX ? exitX / 20 : 0,
+        scale: isExiting ? 0.95 : 1,
+      }}
+      onAnimationComplete={() => {
+        if (isExiting) {
+          // Determine direction based on exit coordinates
+          if (exitX && exitX < 0) {
+            onAnimationComplete('left');
+          } else if (exitX && exitX > 0) {
+            onAnimationComplete('right');
+          }
+        }
+      }}
+      transition={{
+        type: isExiting ? 'spring' : 'tween',
+        stiffness: isExiting ? 300 : 500,
+        damping: isExiting ? 30 : 30,
+        duration: isExiting ? undefined : 0.3,
+      }}
     >
       {/* Header Section */}
       <div className="mb-4">

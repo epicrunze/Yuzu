@@ -14,6 +14,10 @@ import { X, Star, Heart, ExternalLink, BookOpen } from 'lucide-react';
 import { Paper } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css'; // KaTeX styles for math rendering
+
 interface PaperCardProps {
   paper: Paper;
   summary: string;
@@ -106,7 +110,12 @@ export default function PaperCard({
                           prose-li:text-gray-700 prose-li:my-1
                           prose-em:text-gray-600 prose-em:italic
                           prose-code:text-yuzu-700 prose-code:bg-yuzu-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
-            <ReactMarkdown>{summary}</ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[remarkMath]}
+              rehypePlugins={[rehypeKatex]}
+            >
+              {summary}
+            </ReactMarkdown>
           </div>
         ) : (
           <div className="text-gray-400 italic">

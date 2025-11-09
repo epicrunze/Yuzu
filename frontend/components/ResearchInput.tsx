@@ -80,10 +80,11 @@ export default function ResearchInput({ onSubmit, loading }: ResearchInputProps)
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="What research topic interests you?"
-            className="w-full pl-6 pr-32 py-4 rounded-button bg-white shadow-yuzu
+            className="w-full pl-4 pr-16 sm:pr-28 py-4 rounded-button bg-white shadow-yuzu
                        border-2 border-transparent focus:border-yuzu-500
-                       text-gray-900 placeholder-gray-400 text-lg
+                       text-gray-900 placeholder-gray-400
                        transition-all duration-200 outline-none"
+            style={{ fontSize: 'clamp(0.875rem, 2.5vw, 1.125rem)' }}
             disabled={loading}
             autoFocus
           />
@@ -92,7 +93,7 @@ export default function ResearchInput({ onSubmit, loading }: ResearchInputProps)
             type="submit"
             disabled={loading || !query.trim()}
             className="absolute right-2 top-1/2 -translate-y-1/2
-                       px-6 py-2.5 bg-yuzu-500 hover:bg-yuzu-600 
+                       px-3 sm:px-6 py-2.5 bg-yuzu-500 hover:bg-yuzu-600 
                        text-white rounded-button font-medium 
                        transition-all duration-200
                        disabled:opacity-50 disabled:cursor-not-allowed

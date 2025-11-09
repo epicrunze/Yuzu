@@ -5,13 +5,13 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Yuzu - Fresh Research Discovery',
-  description: 'Squeeze knowledge from every paper. Discover research papers through an intuitive swipe interface with AI-powered summaries.',
+  title: 'Yuzu - Squeeze knowledge from every paper',
+  description: 'Discover research papers through an intuitive swipe interface with AI-powered summaries.',
   keywords: 'research, papers, arxiv, academic, citations, bibliography, AI summaries',
   authors: [{ name: 'Yuzu Team' }],
   openGraph: {
-    title: 'Yuzu - Fresh Research Discovery',
-    description: 'Squeeze knowledge from every paper 🍋',
+    title: 'Yuzu - Squeeze knowledge from every paper',
+    description: 'Where papers meet you 🍋',
     type: 'website',
   },
   manifest: '/manifest.json',

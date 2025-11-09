@@ -203,14 +203,6 @@ export default function SwipeInterface({ papers, onSuperlike, onPaperChange }: S
     // Always save the paper
     onSuperlike(currentPaper, currentLevel);
     
-    // Move to next level or next paper (without exit animation)
-    if (currentLevel < 3) {
-      setCurrentLevel(prev => (prev + 1) as 1 | 2 | 3);
-    } else {
-      // At level 3, move to next paper
-      setCurrentIndex(prev => prev + 1);
-      setCurrentLevel(1);
-    }
   }, [currentPaper, currentLevel, onSuperlike]);
 
   /**

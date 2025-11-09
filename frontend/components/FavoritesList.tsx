@@ -18,6 +18,7 @@ export default function FavoritesList() {
   const [isOpen, setIsOpen] = useState(false);
   const [favorites, setFavorites] = useState<SavedPaper[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   // Load favorites from localStorage on mount
   useEffect(() => {
@@ -43,6 +44,20 @@ export default function FavoritesList() {
     return () => {
       window.removeEventListener('yuzu:favorite-added', handleNewFavorite);
     };
+  }, []);
+
+  // Handle scroll visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 100;
+      setIsVisible(scrolled);
+    };
+
+    // Check initial scroll position
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleExport = async () => {
@@ -92,25 +107,33 @@ export default function FavoritesList() {
   return (
     <>
       {/* Floating Favorites Button */}
-      <motion.button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-6 right-6 px-4 py-2 bg-white rounded-full
-                   shadow-yuzu-lg hover:shadow-yuzu transition-all duration-200
-                   flex items-center gap-2 z-50 group"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <Heart 
-          size={18} 
-          className="text-yuzu-500 group-hover:fill-yuzu-500 transition-all" 
-        />
-        <span className="font-semibold text-gray-900">
-          {favorites.length}
-        </span>
-        {favorites.length > 0 && (
-          <span className="text-xs text-gray-500 hidden sm:inline">saved</span>
+      <AnimatePresence>
+        {isVisible && (
+          <motion.button
+            onClick={() => setIsOpen(!isOpen)}
+            initial={{ opacity: 0, scale: 0.8, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-6 right-6 px-4 py-2 bg-white rounded-full
+                       shadow-yuzu-lg hover:shadow-yuzu transition-all duration-200
+                       flex items-center gap-2 z-50 group"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Heart 
+              size={18} 
+              className="text-yuzu-500 group-hover:fill-yuzu-500 transition-all" 
+            />
+            <span className="font-semibold text-gray-900">
+              {favorites.length}
+            </span>
+            {favorites.length > 0 && (
+              <span className="text-xs text-gray-500 hidden sm:inline">saved</span>
+            )}
+          </motion.button>
         )}
-      </motion.button>
+      </AnimatePresence>
 
       {/* Sidebar */}
       <AnimatePresence>

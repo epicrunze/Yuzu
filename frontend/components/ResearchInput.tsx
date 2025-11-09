@@ -27,12 +27,12 @@ export default function ResearchInput({ onSubmit, loading }: ResearchInputProps)
   };
 
   const exampleQueries = [
-    'transformer architecture',
-    'quantum computing',
-    'climate change modeling',
-    'neural network interpretability',
+    'Transformer architecture',
+    'Quantum computing',
+    'Climate change modeling',
+    'Neural network interpretability',
     'CRISPR gene editing',
-    'renewable energy storage'
+    'Renewable energy storage'
   ];
 
   return (

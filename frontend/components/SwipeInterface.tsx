@@ -146,9 +146,13 @@ export default function SwipeInterface({ papers, onSuperlike, onPaperChange }: S
    */
   useEffect(() => {
     if (currentPaper) {
-      fetchSummary(currentPaper, currentLevel);
+      // Only fetch if not already in cache
+      const cached = summaries.get(currentPaper.id);
+      if (!cached || !cached[`level${currentLevel}` as keyof PaperSummary]) {
+        fetchSummary(currentPaper, currentLevel);
+      }
     }
-  }, [currentPaper, currentLevel, fetchSummary]);
+  }, [currentPaper, currentLevel, fetchSummary, summaries]);
 
   /**
    * Handle PASS action (left arrow)
